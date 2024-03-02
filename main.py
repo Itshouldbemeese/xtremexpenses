@@ -1,32 +1,46 @@
 from tkinter import *
-from tkmacosx import Button
+from tkinter import ttk
 
-from window import WINDOW_TITLE, window_size
+from window import WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT, window_size
 from styles import FONT_MAIN
+
+x_axis_labels = ["Date", "Subject", "Plus", "Minus", "Total"]
+
 
 root = Tk()
 root.title(WINDOW_TITLE)
-
-entry = StringVar()
+root.minsize(WINDOW_WIDTH, WINDOW_HEIGHT)
 
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 
 root.geometry(window_size(screen_width, screen_height))
-root.resizable(False, False)
 
-greeting = Label(
-    root, 
-    text="Howdy bitches!",
-    font=FONT_MAIN
-).pack()
+entry = StringVar()
 
-text_entry = Entry(root, textvariable=entry).pack()
+tabs = ttk.Notebook(root)
+tabs.pack(fill="both", expand=True)
 
-quit_button = Button(
-    root,
-    text="Quit Program",
-    command=lambda: root.quit()
-).pack()
+sheet_one = ttk.Frame(tabs)
+sheet_two = ttk.Frame(tabs)
+
+# Date
+sheet_one.columnconfigure(0, weight=1)
+# Subject
+sheet_one.columnconfigure(1, weight=2)
+# Plus
+sheet_one.columnconfigure(2, weight=1)
+# Minus
+sheet_one.columnconfigure(3, weight=1)
+# Running total
+sheet_one.grid_columnconfigure(0, weight=1)
+sheet_one.rowconfigure(0, weight=1)
+
+for i, label in enumerate(x_axis_labels):
+    text = Label(sheet_one, text=label)
+    text.grid(column=i, row=0, sticky=NW)
+
+tabs.add(sheet_one, text="Moose")
+tabs.add(sheet_two, text="Bryce")
 
 root.mainloop()

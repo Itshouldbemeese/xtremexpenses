@@ -1,7 +1,7 @@
 WINDOW_TITLE = "Moose's Expenses Tracker v0.1.0"
 
-WINDOW_WIDTH = 400
-WINDOW_HEIGHT = 600
+WINDOW_WIDTH = 600
+WINDOW_HEIGHT = 400
 
 
 def window_size(width, height):
