@@ -1,46 +1,61 @@
-from tkinter import *
+import tkinter as tk
 from tkinter import ttk
+import sheet_functions as sheet_func
+import custom_widgets as mk
 
 from window import WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT, window_size
 from styles import FONT_MAIN
 
-x_axis_labels = ["Date", "Subject", "Plus", "Minus", "Total"]
+
+sheet_tabs = []
+
+names = ["Moose", "Bryce", "Cam"]
 
 
-root = Tk()
-root.title(WINDOW_TITLE)
-root.minsize(WINDOW_WIDTH, WINDOW_HEIGHT)
+class MainApp(tk.Tk):
+    def __init__(self):
+        super().__init__()
 
-screen_width = root.winfo_screenwidth()
-screen_height = root.winfo_screenheight()
+        self.title(WINDOW_TITLE)
+        self.minsize(WINDOW_WIDTH, WINDOW_HEIGHT)
 
-root.geometry(window_size(screen_width, screen_height))
+        self.screen_width = self.winfo_screenwidth()
+        self.screen_height = self.winfo_screenheight()
 
-entry = StringVar()
+        self.geometry(window_size(self.screen_width, self.screen_height))
 
-tabs = ttk.Notebook(root)
-tabs.pack(fill="both", expand=True)
+        tabs = ttk.Notebook(self)
 
-sheet_one = ttk.Frame(tabs)
-sheet_two = ttk.Frame(tabs)
+        scrollbar = ttk.Scrollbar(tabs, orient=tk.VERTICAL, command=multiple_yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-# Date
-sheet_one.columnconfigure(0, weight=1)
-# Subject
-sheet_one.columnconfigure(1, weight=2)
-# Plus
-sheet_one.columnconfigure(2, weight=1)
-# Minus
-sheet_one.columnconfigure(3, weight=1)
-# Running total
-sheet_one.grid_columnconfigure(0, weight=1)
-sheet_one.rowconfigure(0, weight=1)
+        # self.bind('<<NotebookTabChanged>>',  print_data)
 
-for i, label in enumerate(x_axis_labels):
-    text = Label(sheet_one, text=label)
-    text.grid(column=i, row=0, sticky=NW)
+        for i, name in enumerate(names):
+            new_sheet = mk.ScrollableCanvas(tabs, name)
+            sheet_tabs.append(new_sheet)
+            new_sheet.link_scrollbar(scrollbar)
 
-tabs.add(sheet_one, text="Moose")
-tabs.add(sheet_two, text="Bryce")
+            tabs.add(new_sheet, text=name)
 
-root.mainloop()
+        tabs.pack(fill=tk.BOTH, expand=1)
+
+
+def multiple_yview(*args):
+    for i in sheet_tabs:
+        i.yview_scroll(*args)
+
+
+# def generate_spreadsheet(event=None):
+#     name = tabs.select()
+#     parent = tabs.nametowidget(name)
+
+
+# def print_data(*args):
+#     for key, value in cells.items():
+#         print(f"{key} : {value.get()}")
+
+
+if __name__ == "__main__":
+    app = MainApp()
+    app.mainloop()
