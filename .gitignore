@@ -1,3 +1,4 @@
-/expenses/
 /__pycache__/
+/expenses/
+/sheets/
 *.csv

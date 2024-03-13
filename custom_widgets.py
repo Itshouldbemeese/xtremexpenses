@@ -1,62 +1,54 @@
 import tkinter as tk
-from tkinter import ttk
+import ttkbootstrap as ttkb
+from ttkbootstrap.constants import *
+from ttkbootstrap.scrolled import ScrolledFrame
 import sheet_functions as sheet_func
 
-class ScrollableCanvas(tk.Canvas):
+
+class SpreadSheet(ScrolledFrame):
     def __init__(self, main, name):
+        super().__init__()
+
         self.name = name
-
-        tk.Canvas.__init__(self)
-        self["highlightthickness"] = 0
-
-        self.new_sheet = SpreadSheet(self)
-
-        self.bind('<Configure>', self.canvas_config)
-
-        self.create_window((0,0), window=self.new_sheet, anchor=tk.NW, tags=name)
-
-        self.pack(fill=tk.BOTH, expand=1)
-
-
-    def canvas_config(self, event):
-        self.configure(scrollregion=self.bbox("all"))
-        self.itemconfigure(self.name, width=event.width)
-        self.bind_all('<MouseWheel>', lambda event: self.yview_scroll(int(-1*(event.delta)), "units"))
-
-
-    def link_scrollbar(self, scrollbar):
-        self.configure(yscrollcommand=scrollbar.set)
-
-
-class SpreadSheet(tk.Frame):
-    def __init__(self, main):
-        tk.Frame.__init__(self)
 
         self.cells = {}
         self.sheet_cells = []
+        self.totals = []
 
         self.x_axis_labels = ["Date", "Subject", "Plus", "Minus", "Total"]
         self.y_axis = range(32)
 
-        self.grid_columnconfigure((0, 2, 3, 4), weight=0)
-        self.grid_columnconfigure(2, weight=1)
+        self.columnconfigure((0, 2, 3, 4), weight=0)
+        self.columnconfigure(1, weight=1)
 
         for i, label in enumerate(self.x_axis_labels):
-            self.text = tk.Label(self, text=label)
+            self.text = ttkb.Label(self, text=label)
             self.text.grid(column=i, row=0, sticky=tk.NW)
 
 
+        self.main_sheet_cells = []
         for y in self.y_axis:
+            self.inner_sheet_cells = []
             for coord, x in enumerate(self.x_axis_labels):
-                i = 0
-                self.id = f"{x}:{y}"
+                self.id = f"{name}{x}:{y}"
+
                 self.var = tk.StringVar(self, "", self.id)
                 self.var.trace("w", self.generate_csv)
-                self.entry_cell = tk.Entry(self, textvariable=self.var, width=8)
-                self.sheet_cells.append(self.entry_cell)
-                self.entry_cell.grid(column=coord, row=y+1, sticky=tk.EW)
+
+                if x == "Total":
+                    self.entry_cell = ttkb.Entry(self, textvariable=self.var, width=8)
+                    self.totals.append(self.entry_cell)
+                else:
+                    self.entry_cell = ttkb.Entry(self, textvariable=self.var, width=8)
+
+                self.inner_sheet_cells.append(self.entry_cell)
+                self.entry_cell.grid(column=coord, row=y+1, sticky=tk.NSEW)
+
                 self.cells[self.id] = self.var
-                i += 1
+
+            self.main_sheet_cells.append(self.inner_sheet_cells)
+
+        self.load_spreadsheet()
 
 
     def generate_csv(self, *args):
@@ -74,4 +66,28 @@ class SpreadSheet(tk.Frame):
                 self.counter += 1
             self.main_array.append(self.inner_array)
 
-        sheet_func.write_csv("moose", self.header, self.main_array)
+        sheet_func.write_csv(self.name, self.header, self.main_array)
+
+
+    def load_spreadsheet(self):
+        sheet_func.create_directory()
+
+        try:
+            csv_file = sheet_func.read_csv(self.name)
+        except FileNotFoundError:
+            print("Read action failed.")
+            return
+
+        for y in self.y_axis:
+            for coord, x in enumerate(self.x_axis_labels):
+                var = self.main_sheet_cells[y][coord]
+                var.insert(0, csv_file[1:][y][coord])
+
+
+    def print_data(self):
+        spread = []
+        children = self.winfo_children()
+        for x, i in enumerate(children):
+            if children[1:][x].name == "total":
+                spread.append(children[1:][x])
+                print(spread)
