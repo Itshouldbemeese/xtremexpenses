@@ -24,15 +24,33 @@ class MainApp(ttkb.Window):
 
 
     def create_spreadsheet(self):
-        tabs = ttkb.Notebook(self)
-        tabs.pack(fill=tk.BOTH, expand=True)
+        # tabs = ttkb.Notebook(self)
+        # tabs.pack(fill=tk.BOTH, expand=True)
 
-        for x, label in enumerate(names):
-            frame = mk.SpreadSheet(tabs, label)
-            tabs.add(frame.container, text=label)
+        # for x, label in enumerate(names):
+        #     frame = mk.SpreadSheet(tabs, label)
+        #     tabs.add(frame.container, text=label)
+        label = ttkb.Label(self, text=names[0])
+        label.pack()
+
+        frame = mk.SpreadSheet(self, names[0])
+        frame.pack(expand=True, fill=tk.BOTH, padx=(10, 0), pady=10)
+
+
+    def create_menu_bar(self):
+        new_menu = mk.MenuBar(self)
+        self.config(menu=new_menu)
+
+
+    def create_top_panel(self):
+        top_panel = mk.TopPanel(self)
+        top_panel.add_dropdown_options(names)
+        top_panel.pack(fill=tk.BOTH, padx=(10, 0), pady=10)
 
 
 if __name__ == "__main__":
     app = MainApp()
+    app.create_menu_bar()
+    app.create_top_panel()
     app.create_spreadsheet()
     app.mainloop()

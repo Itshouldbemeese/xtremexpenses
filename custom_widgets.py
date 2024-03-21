@@ -5,6 +5,52 @@ from ttkbootstrap.scrolled import ScrolledFrame
 import sheet_functions as sheet_func
 
 
+class MenuBar(tk.Menu):
+    def __init__(self, main):
+        super().__init__()
+
+        self.file_menu = tk.Menu(self)
+        self.add_cascade(label="File", menu=self.file_menu)
+        self.file_menu.add_command(label="Open...", command=self.open_file)
+
+    def open_file(self):
+        pass
+
+
+class TopPanel(ttkb.Frame):
+    def __init__(self, main):
+        super().__init__()
+
+        self.sheet_var = tk.StringVar()
+        self.sheet_var.trace_add("write", self.sheet_selected)
+
+        self.sheet_dropdown = ttkb.Menubutton(self, text="Sheets")
+        self.sheet_dropdown.pack(side=tk.LEFT, padx=(0, 5))
+
+        self.menu = tk.Menu(self.sheet_dropdown)
+
+        self.sheet_dropdown["menu"] = self.menu
+
+        self.deposit_button = ttkb.Button(self, text="Deposit", takefocus=False)
+        self.deposit_button.pack(side=tk.LEFT, padx=(0, 5))
+
+        self.widthdrawl_button = ttkb.Button(self, text="Widthdrawl", takefocus=False)
+        self.widthdrawl_button.pack(side=tk.LEFT)
+
+
+    def add_dropdown_options(self, options):
+        for i, label in enumerate(options):
+            self.menu.add_radiobutton(
+                label = options[i],
+                value = options[i],
+                variable = self.sheet_var
+            )
+
+
+    def sheet_selected(self):
+        pass
+
+
 class SpreadSheet(ScrolledFrame):
     def __init__(self, main, name):
         super().__init__()
@@ -39,6 +85,8 @@ class SpreadSheet(ScrolledFrame):
 
                 self.var = tk.StringVar(self, "", self.id)
                 self.entry_cell = ttkb.Entry(self, textvariable=self.var, width=8)
+                self.entry_cell.grid(column=coord, row=y+1, sticky=tk.NSEW)
+                self.entry_cell.configure(state="disabled")
 
                 if x == "Plus":
                     self.entry_cell["width"] = 5
@@ -50,10 +98,10 @@ class SpreadSheet(ScrolledFrame):
                     self.minuses.append(self.entry_cell)
                 elif x == "Total":
                     self.totals.append(self.entry_cell)
+                    self.entry_cell.grid(padx=(0, 15))
 
 
                 self.inner_sheet_cells.append(self.entry_cell)
-                self.entry_cell.grid(column=coord, row=y+1, sticky=tk.NSEW)
 
                 self.cells[self.id] = self.var
 
