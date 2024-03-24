@@ -12,11 +12,10 @@ def window_size(width, height):
     int -- width
     int -- height
     '''
-    
+
     center_x = int((width / 2) - (WINDOW_WIDTH / 2))
     center_y = int((height / 2) - (WINDOW_HEIGHT / 2))
-
     window_geometry = \
-        f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}+{center_x}+{center_y}"
+    f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}+{center_x}+{center_y}"
 
     return window_geometry

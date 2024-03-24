@@ -2,7 +2,10 @@ import tkinter as tk
 import ttkbootstrap as ttkb
 from ttkbootstrap.constants import *
 from ttkbootstrap.scrolled import ScrolledFrame
-import sheet_functions as sheet_func
+
+import window as window
+import observer_pattern as observe
+import csv_functions as sheet_func
 
 
 class MenuBar(tk.Menu):
@@ -17,47 +20,103 @@ class MenuBar(tk.Menu):
         pass
 
 
-class TopPanel(ttkb.Frame):
-    def __init__(self, main):
-        super().__init__()
+class TopPanel(ttkb.Frame, observe.Observerable):
+    def __init__(self, main, observable="observable"):
+        ttkb.Frame.__init__(self)
+        observe.Observerable.__init__(self)
 
         self.sheet_var = tk.StringVar()
         self.sheet_var.trace_add("write", self.sheet_selected)
 
-        self.sheet_dropdown = ttkb.Menubutton(self, text="Sheets")
-        self.sheet_dropdown.pack(side=tk.LEFT, padx=(0, 5))
+        self.title_label = ttkb.Label(self, text=self.sheet_var.get())
+        self.title_label.pack(side=tk.BOTTOM)
 
-        self.menu = tk.Menu(self.sheet_dropdown)
+        self.dropdown = ttkb.Menubutton(self, text="Sheets")
+        self.dropdown.menu = tk.Menu(self)
+        self.dropdown["menu"] = self.dropdown.menu
+        self.dropdown.pack(side=tk.LEFT, padx=(0, 5))
 
-        self.sheet_dropdown["menu"] = self.menu
-
-        self.deposit_button = ttkb.Button(self, text="Deposit", takefocus=False)
+        self.deposit_button = ttkb.Button(self, text="Deposit", takefocus=False, command=self.create_deposit_window)
         self.deposit_button.pack(side=tk.LEFT, padx=(0, 5))
 
-        self.widthdrawl_button = ttkb.Button(self, text="Widthdrawl", takefocus=False)
+        self.widthdrawl_button = ttkb.Button(self, text="Widthdrawl", takefocus=False, command=self.create_widthdrawl_window)
         self.widthdrawl_button.pack(side=tk.LEFT)
-
 
     def add_dropdown_options(self, options):
         for i, label in enumerate(options):
-            self.menu.add_radiobutton(
+            self.dropdown.menu.add_radiobutton(
                 label = options[i],
                 value = options[i],
                 variable = self.sheet_var
             )
 
+    def create_deposit_window(self):
+        DepositWindow(self)
 
-    def sheet_selected(self):
-        pass
+    def create_widthdrawl_window(self):
+        WidthdrawlWindow(self)
+
+    def sheet_selected(self, *args):
+        signal = self.sheet_var.get()
+        self.title_label["text"] = signal
+        self.send_signal(signal)
 
 
-class SpreadSheet(ScrolledFrame):
-    def __init__(self, main, name):
+class PopupWindow(ttkb.Frame):
+    def __init__(self, main):
         super().__init__()
 
-        self.name = name
+        self.grab_set()
 
-        self.balance = 0
+        self.configure(style="primary.TFrame")
+
+        self.columnconfigure((0, 2), weight=0)
+        self.columnconfigure(1, weight=2)
+        self.rowconfigure((0, 1, 2, 3, 4), weight=1)
+
+        self.title = ttkb.Label(self, text="Undefined", bootstyle="secondary.TLabel")
+        self.title.grid(row=0, column=1, padx=10, pady=10, sticky=tk.N)
+
+        self.sumbit_button = ttkb.Button(self, text="Submit", bootstyle="success", command=self.submit)
+        self.sumbit_button.grid(row=4, column=2, padx=10, pady=10, sticky=tk.SW)
+
+        self.back_button = ttkb.Button(self, text="Back", bootstyle="danger", command=self.back)
+        self.back_button.grid(row=4, column=0, padx=10, pady=10, sticky=tk.SE)
+
+        self.place(rely=0.4, relx=0.5, relheight=0.5, relwidth=0.5, anchor=tk.CENTER)
+
+    def submit(self):
+        print("Submitted m'lord")
+
+    def back(self):
+        self.destroy()
+
+
+class DepositWindow(PopupWindow):
+    def __init__(self, main):
+        super().__init__(self)
+
+        self.title["text"] = "Deposit"
+
+    def submit(self):
+        print("Deposited!")
+
+
+class WidthdrawlWindow(PopupWindow):
+    def __init__(self, main):
+        super().__init__(self)
+
+        self.title["text"] = "Widthdrawl"
+
+    def submit(self):
+        print("Widthdrawn!")
+
+
+class SpreadSheet(ScrolledFrame, observe.Observer):
+    def __init__(self, main):
+        ScrolledFrame.__init__(self)
+
+        self.sheet_name = "Moose"
 
         self.cells = {}
         self.sheet_cells = []
@@ -81,7 +140,7 @@ class SpreadSheet(ScrolledFrame):
         for y in range(self.y_axis):
             self.inner_sheet_cells = []
             for coord, x in enumerate(self.x_axis_labels):
-                self.id = f"{name}{x}:{y}"
+                self.id = f"{x}:{y}"
 
                 self.var = tk.StringVar(self, "", self.id)
                 self.entry_cell = ttkb.Entry(self, textvariable=self.var, width=8)
@@ -90,11 +149,9 @@ class SpreadSheet(ScrolledFrame):
 
                 if x == "Plus":
                     self.entry_cell["width"] = 5
-                    self.entry_cell.bind("<FocusOut>", self.calculate_spreadsheet)
                     self.pluses.append(self.entry_cell)
                 elif x == "Minus":
                     self.entry_cell["width"] = 5
-                    self.entry_cell.bind("<FocusOut>", self.calculate_spreadsheet)
                     self.minuses.append(self.entry_cell)
                 elif x == "Total":
                     self.totals.append(self.entry_cell)
@@ -106,28 +163,6 @@ class SpreadSheet(ScrolledFrame):
                 self.cells[self.id] = self.var
 
             self.main_sheet_cells.append(self.inner_sheet_cells)
-
-        self.load_spreadsheet()
-
-
-    def calculate_spreadsheet(self, *args):
-        for i in range(self.y_axis):
-            self.total = self.trim_value(self.totals[i].get())
-            self.plus = self.trim_value(self.pluses[i].get())
-            self.minus = self.trim_value(self.minuses[i].get())
-
-            self.value = (
-                float(0 if self.plus is None else self.plus) 
-                - float(0 if self.minus is None else self.minus)
-            )
-
-            if self.value == 0.0:
-                self.totals[i].delete(0, tk.END)
-            else:
-                self.totals[i].delete(0, tk.END)
-                self.totals[i].insert(0, self.value)
-
-                print(self.balance, self.value)
 
 
     def trim_value(self, value):
@@ -151,28 +186,28 @@ class SpreadSheet(ScrolledFrame):
                 self.counter += 1
             self.main_array.append(self.inner_array)
 
-        sheet_func.write_csv(self.name, self.header, self.main_array)
+        sheet_func.write_csv(self.sheet_name, self.header, self.main_array)
 
 
-    def load_spreadsheet(self):
+    def load_spreadsheet(self, name):
         sheet_func.create_directory()
 
         try:
-            csv_file = sheet_func.read_csv(self.name)
+            csv_file = sheet_func.read_csv(name)
         except FileNotFoundError:
             print("Read action failed.")
             return
 
-        for y in self.y_axis:
+        for y in range(self.y_axis):
             for coord, x in enumerate(self.x_axis_labels):
                 var = self.main_sheet_cells[y][coord]
+                var.configure(state="normal")
                 var.insert(0, csv_file[1:][y][coord])
+                var.configure(state="disabled")
 
 
-    def print_data(self):
-        spread = []
-        children = self.winfo_children()
-        for x, i in enumerate(children):
-            if children[1:][x].name == "total":
-                spread.append(children[1:][x])
-                print(spread)
+    def receive_signal(self, observable, value=None, *args, **kwargs):
+        self.sheet_name = value
+        self.load_spreadsheet(value)
+
+        print(value)
