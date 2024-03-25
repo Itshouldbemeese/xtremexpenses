@@ -34,9 +34,8 @@ class MainApp(ttkb.Window):
 
 
     def create_top_panel(self):
-        top_panel = mk.TopPanel(self)
+        top_panel = mk.TopPanel(self, self.frame)
         top_panel.add_dropdown_options(names)
-        top_panel.subscribe(self.frame)
         top_panel.pack(fill=tk.BOTH, padx=(10, 0), pady=10)
 
 
