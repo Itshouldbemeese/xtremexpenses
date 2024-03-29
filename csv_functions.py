@@ -15,36 +15,39 @@ def create_directory():
     if not os.path.exists(PATH):
         os.mkdir(PATH)
         print(f"Path {PATH} created successfully!")
-        for name in names:
+
+    for name in names:
+        if not os.path.exists(f"{PATH}/{name.lower()}.csv"):
             with open(f"{PATH}/{name.lower()}.csv", "w") as file:
                 writer = csv.writer(file)
 
                 writer.writerow(HEADER)
-        return
     else:
         print(f"Path {PATH} already exists!")
         return
 
 
-def write_csv(name, header, sheet):
-    '''
-    Creates a .csv file and updates it with current values.
-    name = name of person and file. Example: moose.csv
-    '''
-
-    with open(f"{PATH}/{name.lower()}.csv", "w") as file:
-        writer = csv.writer(file)
-
-        writer.writerow(header)
-        writer.writerows(sheet)
-
-
 def dict_write_csv(name, row):
+    check_sheet_length(name)
+
     with open(f"{PATH}/{name.lower()}.csv", "a+") as file:
         dict_writer = csv.DictWriter(file, fieldnames=HEADER)
 
         dict_writer.writerow(row)
 
+
+def check_sheet_length(name):
+    rows = read_csv(name)
+
+    if len(rows) >= 32:
+        with open(f"{PATH}/{name.lower()}.csv", "w") as file:
+            writer = csv.writer(file)
+
+            writer.writerow(HEADER)
+            writer.writerow(rows[-1])
+        return
+    else:
+        return
 
 def read_csv(name):
     '''
@@ -56,10 +59,3 @@ def read_csv(name):
     except FileNotFoundError:
         print("UH OH")
         raise
-        return
-
-
-def return_column(name, column):
-    with open(f"{PATH}/{name.lower()}.csv", "r") as file:
-        column = [row[column] for row in csv.reader(file)][1:]
-        return column

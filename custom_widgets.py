@@ -1,5 +1,6 @@
 import tkinter as tk
 import ttkbootstrap as ttkb
+from tkinter import ttk
 from ttkbootstrap.constants import *
 from ttkbootstrap.scrolled import ScrolledFrame
 
@@ -126,8 +127,10 @@ class PopupWindow(ttkb.Frame):
 
     def trim_value(self, value):
         if not value == "":
-            if '+' or '-' in value[0]:
+            if not value[0].isdigit():
                 return value[1:]
+            else:
+                return value
 
 
 class DepositWindow(PopupWindow, observe.Observerable):
@@ -150,10 +153,7 @@ class DepositWindow(PopupWindow, observe.Observerable):
         }
 
         plus = self.trim_value(self.value_var.get())
-
         prev_total = sheet_func.read_csv(self.current_sheet)
-
-        print(prev_total[-1][-1])
 
         if prev_total[-1][-1] == "Total":
              new_total = float(csv_row["Total"])
@@ -194,10 +194,7 @@ class WidthdrawlWindow(PopupWindow, observe.Observerable):
         }
 
         minus = self.trim_value(self.value_var.get())
-
         prev_total = sheet_func.read_csv(self.current_sheet)
-
-        print(prev_total[-1][-1])
 
         if prev_total[-1][-1] == "Total":
              new_total = float(csv_row["Total"])
@@ -232,7 +229,7 @@ class SpreadSheet(ScrolledFrame, observe.Observer):
         self.totals = []
 
         self.x_axis_labels = ["Date", "Subject", "Plus", "Minus", "Total"]
-        self.y_axis = 32
+        self.y_axis = 64
 
         self.columnconfigure((0, 2, 3, 4), weight=0)
         self.columnconfigure(1, weight=1)
@@ -248,8 +245,9 @@ class SpreadSheet(ScrolledFrame, observe.Observer):
                 self.id = f"{x}:{y}"
 
                 self.var = tk.StringVar(self, "", self.id)
-                self.entry_cell = ttkb.Entry(self, textvariable=self.var, width=8)
+                self.entry_cell = ttkb.Entry(self, textvariable=self.var, width=8, style="primary")
                 self.entry_cell.grid(column=coord, row=y+1, sticky=tk.NSEW)
+                self.entry_cell.configure(state="readonly")
 
                 if x == "Plus":
                     self.entry_cell["width"] = 5
@@ -295,13 +293,15 @@ class SpreadSheet(ScrolledFrame, observe.Observer):
             print("Read action failed.")
             return
 
-        for y in range(self.y_axis):
+        for y in range(len(csv_file) - 1):
             for coord, x in enumerate(self.x_axis_labels):
                 var = self.main_sheet_cells[y][coord]
 
                 try:
+                    var.config(state="normal")
                     var.delete(0, tk.END)
                     var.insert(0, csv_file[1:][y][coord])
+                    var.config(state="readonly")
                 except IndexError:
                     pass
 
