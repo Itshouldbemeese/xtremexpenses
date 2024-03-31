@@ -6,6 +6,8 @@ import custom_widgets as mk
 import window as window
 from styles import FONT_MAIN
 
+# For Moomoo
+
 names = ["Moose", "Bryce", "Cam"]
 
 

@@ -1,16 +1,18 @@
 import csv
 import os
+from pathlib import Path
 
-PATH = "./sheets"
+PATH = (f"{Path.home()}/Library/Application Support/Sheets")
 HEADER = ["Date", "Subject", "Plus", "Minus", "Total"]
 
 names = ["Moose", "Bryce", "Cam"]
-
 
 def create_directory():
     '''
     Creates a directory for the .csv files to live.
     '''
+
+    print(PATH)
 
     if not os.path.exists(PATH):
         os.mkdir(PATH)
